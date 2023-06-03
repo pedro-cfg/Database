@@ -26,7 +26,7 @@ public class SQLManager {
     public void select()
     {
         boolean success = false;
-        SelectOperation operation = new SelectOperation(parser.getColumns(), parser.getFromTable());
+        SelectOperation operation = new SelectOperation(parser.getColumns(), parser.getFromTable(), parser.getForeignTables(), parser.getForeignKeys());
         success = operation.execute();
         if(!success)
             System.out.println("Error in SQL statement");

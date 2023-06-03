@@ -12,11 +12,15 @@ public class SelectOperation {
 
     private List<String> columns;
     private String fromTable;
+    private List<String> joinTables;
+    private List<String> joinKeys;
 
-    SelectOperation(List<String> columnsList, String table)
+    SelectOperation(List<String> columnsList, String table, List<String> jTables, List<String> jKeys)
     {
         columns = columnsList;
         fromTable = table;
+        joinTables = jTables;
+        joinKeys = jKeys;
     }
 
     public boolean execute()

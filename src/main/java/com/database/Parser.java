@@ -15,6 +15,8 @@ public class Parser {
     private operationNumber operation;
     private String sentence;
     private List<String> columns;
+    private List<String> joinTables;
+    private List<String> joinKeys;
     private String fromTable;
     private boolean senteceIsValid;
 
@@ -28,6 +30,8 @@ public class Parser {
         operation = null;
         sentence = "";
         columns = new ArrayList<>();
+        joinTables = new ArrayList<>();
+        joinKeys = new ArrayList<>();
         fromTable = "";
         senteceIsValid = false;
     }
@@ -46,7 +50,7 @@ public class Parser {
 
         String[] words = sentence.split("\\s+");
 
-        switch(words[0])
+        switch(words[0].toLowerCase())
         {
             case "select":
                 operation = operationNumber.SELECT;
@@ -74,7 +78,7 @@ public class Parser {
     public boolean parseSelect(String[] words)
     {
         int i = 1;
-        while(i < words.length && !words[i].equals("from")) 
+        while(i < words.length && !words[i].toLowerCase().equals("from")) 
         {
             columns.add(words[i]);
             i++;
@@ -83,6 +87,13 @@ public class Parser {
             return false;
         i++;
         parseFrom(words, i);
+        i++;
+        if(i < words.length && (words[i].toLowerCase().equals("join") || (words[i].toLowerCase().equals("inner") && words[i++].toLowerCase().equals("join"))))
+        {
+            boolean succesfulJoin = parseJoin(words, i);
+            if(!succesfulJoin)
+                return false;
+        }
         return true;
     }
 
@@ -119,6 +130,73 @@ public class Parser {
         return true;
     }
 
+    public boolean parseJoin(String[] words, int i)
+    {
+        while(i<words.length && !words[i].toLowerCase().equals("where") && !words[i].toLowerCase().equals("order"))
+        {
+            if(words[i].toLowerCase().equals("join") || (words[i].toLowerCase().equals("inner") && words[i++].toLowerCase().equals("join")))
+            {
+                if(words[i].equals("inner"))
+                    i++;
+                i++;
+            }
+            joinTables.add(words[i]);
+            i++;
+
+            if(words[i].toLowerCase().equals("on"))
+            {
+                i++;
+                if(words[i].contains("="))
+                {
+                    String[] separated = words[i].split("=");
+                    joinKeys.add(separated[0]);
+                    if(separated.length > 1 && !separated[1].equals(""))
+                        joinKeys.add(separated[1]);
+                    else
+                    {
+                        i++;
+                        joinKeys.add(words[i]);
+                    }
+                }
+                else
+                {
+                    joinKeys.add(words[i]);
+                    i++;
+                    if(words[i].contains("="))
+                    {
+                        words[i] = words[i].replaceAll("=","");
+                        if(words[i].equals(""))
+                            i++;
+                        joinKeys.add(words[i]);
+                    }
+                    else
+                        return false;
+                }
+            }
+            else if(words[i].toLowerCase().contains("using"))
+            {
+                if(words[i].contains("("))
+                {
+                    words[i] = words[i].replaceAll("\\("," ");
+                    words[i] = words[i].replaceAll("\\)","");
+                    String[] separated = words[i].split(" ");
+                    joinKeys.add(separated[1]);
+                }
+                else
+                {
+                    i++;
+                    words[i] = words[i].replaceAll("\\(","");
+                    words[i] = words[i].replaceAll("\\)","");
+                    joinKeys.add(words[i]);
+                }
+            }
+            else
+                return false;
+            i++;
+        }
+        return true;
+    }
+
     public void parseFrom(String[] words, int i)
     {
         fromTable = words[i];
@@ -138,4 +216,15 @@ public class Parser {
     {
         return senteceIsValid;
     }
+
+    public List<String> getForeignTables()
+    {
+        return joinTables;
+    }
+
+    public List<String> getForeignKeys()
+    {
+        return joinKeys;
+    }
+
 }
