@@ -57,15 +57,15 @@ public class Parser {
                 senteceIsValid = parseSelect(words);
                 break;
             case "update":
-                operation = operationNumber.SELECT;
+                operation = operationNumber.UPDATE;
                 senteceIsValid = parseUpdate(words);
                 break;
             case "insert":
-                operation = operationNumber.SELECT;
+                operation = operationNumber.INSERT;
                 senteceIsValid = parseInsert(words);
                 break;
             case "delete":
-                operation = operationNumber.SELECT;
+                operation = operationNumber.DELETE;
                 senteceIsValid = parseDelete(words);
                 break;
             default:
