@@ -21,16 +21,18 @@ public class SelectOperation {
     private String fromTable;
     private List<String> joinTables;
     private List<String> joinKeys;
+    private List<String> whereKeys;
     private List<List<String>> results;
     private List<Integer> columnNumbers;
     private List<Field> header;
 
-    SelectOperation(List<String> columnsList, String table, List<String> jTables, List<String> jKeys)
+    SelectOperation(List<String> columnsList, String table, List<String> jTables, List<String> jKeys, List<String> wKeys)
     {
         columns = columnsList;
         fromTable = table;
         joinTables = jTables;
         joinKeys = jKeys;
+        whereKeys = wKeys;
         results = new ArrayList<>();
         columnNumbers = new ArrayList<>();
         header = new ArrayList<>();
@@ -40,13 +42,16 @@ public class SelectOperation {
     {
         if(!buildHeader())
             return false;
-        for(int i = 0; i < columns.size(); i++)
-        {
-            System.out.print(header.get(columnNumbers.get(i)).value + " ");
-        }
         System.out.print("\n");
         if(!buildResults())
             return false;
+        if(whereKeys.size() > 0)
+        {
+            if(!whereClause())
+                return false;
+        }
+        for(int i = 0; i < columns.size(); i++)
+            System.out.print(header.get(columnNumbers.get(i)).value + " ");
         printResults();
         return true;
     }
@@ -99,6 +104,15 @@ public class SelectOperation {
         {
             return false;
         }
+    }
+
+    public boolean whereClause()
+    {
+        for(int i = 0; i < whereKeys.size(); i++)
+        {
+            
+        }
+        return true;
     }
 
     public boolean buildHeader()

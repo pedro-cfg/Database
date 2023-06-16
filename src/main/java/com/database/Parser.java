@@ -2,6 +2,8 @@ package com.database;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class Parser {
     
@@ -17,6 +19,7 @@ public class Parser {
     private List<String> columns;
     private List<String> joinTables;
     private List<String> joinKeys;
+    private List<String> whereKeys;
     private String fromTable;
     private boolean senteceIsValid;
 
@@ -32,6 +35,7 @@ public class Parser {
         columns = new ArrayList<>();
         joinTables = new ArrayList<>();
         joinKeys = new ArrayList<>();
+        whereKeys = new ArrayList<>();
         fromTable = "";
         senteceIsValid = false;
     }
@@ -90,8 +94,13 @@ public class Parser {
         i++;
         if(i < words.length && (words[i].toLowerCase().equals("join") || (words[i].toLowerCase().equals("inner") && words[i++].toLowerCase().equals("join"))))
         {
-            boolean succesfulJoin = parseJoin(words, i);
-            if(!succesfulJoin)
+            if(!parseJoin(words, i))
+                return false;
+            i++;
+        }
+        if(i < words.length && words[i].toLowerCase().equals("where"))
+        {
+            if(!parseWhere(words, i))
                 return false;
         }
         return true;
@@ -197,6 +206,47 @@ public class Parser {
         return true;
     }
 
+    public boolean parseWhere(String[] words, int i)
+    {
+        i++;
+        if(i < words.length && (words[i].toLowerCase().equals("and") || words[i].toLowerCase().equals("or")))
+        {
+            whereKeys.add(words[i]);
+        }
+        while(i < words.length && !words[i].toLowerCase().equals("order"))
+        {
+            String phrase = words[i];
+            if(!phrase.contains("\\."))
+            {
+                phrase = fromTable + "." + phrase;
+            }
+            String regex = "(\\w+[.]\\w+)\\s*([<>=]+)\\s*(\\w+)";
+            Pattern pattern = Pattern.compile(regex);
+            Matcher matcher = pattern.matcher(phrase);
+            int k=0;
+            while(i < words.length && !matcher.matches() && k < 2)
+            {
+                if(phrase.contains("\""))
+                {
+                    phrase.replace("\"", "");
+                }
+                k++;
+                i++;
+                phrase = phrase.concat(" " + words[i]);
+                matcher = pattern.matcher(phrase);
+            }
+            if (matcher.matches()) {
+                whereKeys.add(matcher.group(1));
+                whereKeys.add(matcher.group(2));
+                whereKeys.add(matcher.group(3));                
+            } else {
+                return false;
+            }
+            i++;
+        }
+        return true;
+    }
+
     public void parseFrom(String[] words, int i)
     {
         fromTable = words[i];
@@ -227,4 +277,8 @@ public class Parser {
         return joinKeys;
     }
 
+    public List<String> getWhereStatement()
+    {
+        return whereKeys;
+    }
 }
