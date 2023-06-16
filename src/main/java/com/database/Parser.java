@@ -20,6 +20,7 @@ public class Parser {
     private List<String> joinTables;
     private List<String> joinKeys;
     private List<String> whereKeys;
+    private List<String> orderKeys;
     private String fromTable;
     private boolean senteceIsValid;
 
@@ -36,6 +37,7 @@ public class Parser {
         joinTables = new ArrayList<>();
         joinKeys = new ArrayList<>();
         whereKeys = new ArrayList<>();
+        orderKeys = new ArrayList<>();
         fromTable = "";
         senteceIsValid = false;
     }
@@ -98,10 +100,29 @@ public class Parser {
                 return false;
             i++;
         }
-        if(i < words.length && words[i].toLowerCase().equals("where"))
+        while(i < words.length && !words[i].toLowerCase().equals("order"))
         {
-            if(!parseWhere(words, i))
-                return false;
+            if(words[i].toLowerCase().equals("where"))
+            {
+                if(!parseWhere(words, i))
+                    return false;
+            }
+            i++;
+        }
+        while(i < words.length)
+        {
+            if(words[i].toLowerCase().equals("order"))
+            {
+                i++;
+                if(words[i].toLowerCase().equals("by"))
+                {
+                    i++;
+                    parseOrderBy(words, i);
+                }
+                else
+                    return false;
+            }
+            i++;
         }
         return true;
     }
@@ -209,30 +230,43 @@ public class Parser {
     public boolean parseWhere(String[] words, int i)
     {
         i++;
-        if(i < words.length && (words[i].toLowerCase().equals("and") || words[i].toLowerCase().equals("or")))
-        {
-            whereKeys.add(words[i]);
-        }
         while(i < words.length && !words[i].toLowerCase().equals("order"))
         {
-            String phrase = words[i];
-            if(!phrase.contains("\\."))
+            if(i < words.length && (words[i].toLowerCase().equals("and") || words[i].toLowerCase().equals("or")))
             {
-                phrase = fromTable + "." + phrase;
+                whereKeys.add(words[i]);
+                i++;
             }
-            String regex = "(\\w+[.]\\w+)\\s*([<>=]+)\\s*(\\w+)";
+            String phrase = words[i];
+            String regex = "(\\w+[.]\\w+)\\s*([<>=]+)\\s*(\\w+.*?)";
+            if(!phrase.contains("."))
+            {
+                regex = "(\\w+)\\s*([<>=]+)\\s*(\\w+.*?)";
+            }
             Pattern pattern = Pattern.compile(regex);
             Matcher matcher = pattern.matcher(phrase);
             int k=0;
             while(i < words.length && !matcher.matches() && k < 2)
             {
-                if(phrase.contains("\""))
-                {
-                    phrase.replace("\"", "");
-                }
                 k++;
                 i++;
-                phrase = phrase.concat(" " + words[i]);
+                if(i < words.length && words[i].contains("\""))
+                {
+                    String value = words[i];
+                    Pattern pattern2 = Pattern.compile("\"(.*?)\"");;
+                    Matcher matcher2 = pattern2.matcher(value);
+                    while(i < words.length && !matcher2.matches())
+                    {
+                        i++;
+                        if(i < words.length)
+                            value = value.concat(" " + words[i]);
+                        matcher2 = pattern2.matcher(value);
+                    }
+                    value = value.replace("\"","");
+                    phrase = phrase.concat(" " + value);
+                }
+                else
+                    phrase = phrase.concat(" " + words[i]);
                 matcher = pattern.matcher(phrase);
             }
             if (matcher.matches()) {
@@ -245,6 +279,24 @@ public class Parser {
             i++;
         }
         return true;
+    }
+
+    public void parseOrderBy(String[] words, int i)
+    {
+        while(i < words.length)
+        {
+            orderKeys.add(words[i]);
+            i++;
+            if(i >= words.length || (!words[i].toLowerCase().equals("desc") && !words[i].toLowerCase().equals("asc")))
+            {
+                orderKeys.add("asc"); 
+            }        
+            else
+            {
+                orderKeys.add(words[i]);
+                i++;
+            }
+        }
     }
 
     public void parseFrom(String[] words, int i)
@@ -280,5 +332,10 @@ public class Parser {
     public List<String> getWhereStatement()
     {
         return whereKeys;
+    }
+
+    public List<String> getOrderByStatement()
+    {
+        return orderKeys;
     }
 }
