@@ -5,7 +5,8 @@ import java.util.Scanner;
 public class Main {
     public static void main(String[] args)
     {           
-        SQLManager manager = new SQLManager();
+        FileManager fileM = new FileManager();
+        SQLManager manager = new SQLManager(fileM);
 
         Scanner scanner = new Scanner(System.in);
 
@@ -20,5 +21,4 @@ public class Main {
 
         scanner.close();
     }
-
 }
