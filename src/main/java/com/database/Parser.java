@@ -21,6 +21,11 @@ public class Parser {
     private List<String> joinKeys;
     private List<String> whereKeys;
     private List<String> orderKeys;
+    private List<String> insertFields;
+    private List<String> insertValues;
+    private String updateField;
+    private String updateValue;
+
     private String fromTable;
     private boolean senteceIsValid;
 
@@ -38,6 +43,8 @@ public class Parser {
         joinKeys = new ArrayList<>();
         whereKeys = new ArrayList<>();
         orderKeys = new ArrayList<>();
+        insertFields = new ArrayList<>();
+        insertValues = new ArrayList<>();
         fromTable = "";
         senteceIsValid = false;
     }
@@ -53,6 +60,8 @@ public class Parser {
 
         sentence = SQLsentence;
         sentence = sentence.replaceAll(","," ");
+        sentence = sentence.replaceAll("\\("," ");
+        sentence = sentence.replaceAll("\\)"," ");
 
         String[] words = sentence.split("\\s+");
 
@@ -81,7 +90,7 @@ public class Parser {
         return senteceIsValid;
     }
 
-    public boolean parseSelect(String[] words)
+    private boolean parseSelect(String[] words)
     {
         int i = 1;
         while(i < words.length && !words[i].toLowerCase().equals("from")) 
@@ -94,6 +103,8 @@ public class Parser {
         i++;
         parseFrom(words, i);
         i++;
+        if(i < words.length && !words[i].toLowerCase().equals("join") &&!words[i].toLowerCase().equals("where") && !words[i].toLowerCase().equals("order"))
+            return false;
         if(i < words.length && (words[i].toLowerCase().equals("join") || (words[i].toLowerCase().equals("inner") && words[i++].toLowerCase().equals("join"))))
         {
             if(!parseJoin(words, i))
@@ -127,40 +138,130 @@ public class Parser {
         return true;
     }
 
-    public boolean parseUpdate(String[] words)
+    private boolean parseUpdate(String[] words)
     {
-        // int i = 0;
-        // while(i < words.length && !words[i].equals("from")) 
-        // {
-        //     updateClause = updateClause.concat(words[i] + " ");
-        //     i++;
-        // }
+        int i = 1;
+        if(i < words.length)
+            fromTable = words[i];
+        i++;
+        if(i >= words.length || !words[i].toLowerCase().equals("set"))
+            return false;
+        i++;
+        String phrase = words[i];
+        String regex = "(\\w+[.]\\w+)\\s*[=]\\s*(\\w+.*?)";
+        if(!phrase.contains("."))
+        {
+            regex = "(\\w+)\\s*[=]\\s*(\\w+.*?)";
+        }
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher = pattern.matcher(phrase);
+        String word;
+        String regex2 = "\"([^\"]+)\"";
+        Pattern pattern2 = Pattern.compile(regex2);
+        Matcher matcher2;
+        i++;
+        int k = 0;
+        while(i < words.length && !matcher.matches() && k < 2)
+        {
+            if(words[i].contains("\""))
+            {
+                word = words[i];
+                matcher2 = pattern2.matcher(word);
+                while(i < words.length && !matcher2.matches())
+                {
+                    i++;
+                    word = word.concat(" " + words[i]);
+                    matcher2 = pattern2.matcher(word);
+                }
+                if(matcher2.matches())
+                    phrase = phrase.concat(" " + word.replace("\"",""));
+            }
+            else
+                phrase = phrase.concat(" " + words[i]);
+            matcher = pattern.matcher(phrase);
+            i++;
+            k++;
+        }
+        if (matcher.matches()) {
+            updateField = matcher.group(1);
+            updateValue = matcher.group(2);                
+        } else {
+            return false;
+        }
+        if(i < words.length && words[i].toLowerCase().equals("where"))
+        {
+            if(!parseWhere(words, i))
+            return false;
+        }
         return true;
     }
 
-    public boolean parseInsert(String[] words)
+    private boolean parseInsert(String[] words)
     {
-        // int i = 0;
-        // while(i < words.length && !words[i].equals("from")) 
-        // {
-        //     insertClause = insertClause.concat(words[i] + " ");
-        //     i++;
-        // }
+        int i = 1;
+        if(i >= words.length || !words[i].toLowerCase().equals("into"))
+            return false;
+        i++;
+        if(i < words.length)
+            fromTable = words[i];
+        else
+            return false;
+        i++;
+        while(i < words.length && !words[i].toLowerCase().equals("values"))
+        {
+            insertFields.add(words[i]);
+            i++;
+        }
+        if(i >= words.length || !words[i].toLowerCase().equals("values"))
+            return false;
+        i++;
+        String word;
+        String regex = "\"([^\"]+)\"";
+        Pattern pattern = Pattern.compile(regex);
+        Matcher matcher;
+        while(i < words.length)
+        {
+            if(words[i].contains("\""))
+            {
+                word = words[i];
+                matcher = pattern.matcher(word);
+                while(i < words.length && !matcher.matches())
+                {
+                    i++;
+                    word = word.concat(" " + words[i]);
+                    matcher = pattern.matcher(word);
+                }
+                if(matcher.matches())
+                    insertValues.add(word.replaceAll("\"", ""));
+            }
+            else
+                insertValues.add(words[i]);
+            i++;
+        }
+        if((insertFields.size() > 0 && insertFields.size() != insertValues.size()) || insertValues.size() == 0)
+            return false;
         return true;
     }
 
-    public boolean parseDelete(String[] words)
+    private boolean parseDelete(String[] words)
     {
-        // int i = 0;
-        // while(i < words.length && !words[i].equals("from")) 
-        // {
-        //     deleteClause = deleteClause.concat(words[i] + " ");
-        //     i++;
-        // }
+        int i = 1;
+        if(i >= words.length || !words[i].toLowerCase().equals("from"))
+            return false;
+        i++;
+        if(i < words.length)
+            fromTable = words[i];
+        else
+            return false;
+        i++;
+        if(i >= words.length || !words[i].toLowerCase().equals("where"))
+            return false;
+        if(!parseWhere(words, i))
+            return false;
         return true;
     }
 
-    public boolean parseJoin(String[] words, int i)
+    private boolean parseJoin(String[] words, int i)
     {
         while(i<words.length && !words[i].toLowerCase().equals("where") && !words[i].toLowerCase().equals("order"))
         {
@@ -170,13 +271,14 @@ public class Parser {
                     i++;
                 i++;
             }
-            joinTables.add(words[i]);
+            if(i < words.length)
+                joinTables.add(words[i]);
             i++;
 
-            if(words[i].toLowerCase().equals("on"))
+            if(i < words.length && words[i].toLowerCase().equals("on"))
             {
                 i++;
-                if(words[i].contains("="))
+                if(i < words.length && words[i].contains("="))
                 {
                     String[] separated = words[i].split("=");
                     joinKeys.add(separated[0]);
@@ -185,7 +287,8 @@ public class Parser {
                     else
                     {
                         i++;
-                        joinKeys.add(words[i]);
+                        if(i < words.length)
+                            joinKeys.add(words[i]);
                     }
                 }
                 else
@@ -203,22 +306,10 @@ public class Parser {
                         return false;
                 }
             }
-            else if(words[i].toLowerCase().contains("using"))
+            else if(i < words.length && words[i].toLowerCase().contains("using"))
             {
-                if(words[i].contains("("))
-                {
-                    words[i] = words[i].replaceAll("\\("," ");
-                    words[i] = words[i].replaceAll("\\)","");
-                    String[] separated = words[i].split(" ");
-                    joinKeys.add(separated[1]);
-                }
-                else
-                {
-                    i++;
-                    words[i] = words[i].replaceAll("\\(","");
-                    words[i] = words[i].replaceAll("\\)","");
-                    joinKeys.add(words[i]);
-                }
+                i++;
+                joinKeys.add(words[i]);
             }
             else
                 return false;
@@ -227,7 +318,7 @@ public class Parser {
         return true;
     }
 
-    public boolean parseWhere(String[] words, int i)
+    private boolean parseWhere(String[] words, int i)
     {
         i++;
         while(i < words.length && !words[i].toLowerCase().equals("order"))
@@ -281,7 +372,7 @@ public class Parser {
         return true;
     }
 
-    public void parseOrderBy(String[] words, int i)
+    private void parseOrderBy(String[] words, int i)
     {
         while(i < words.length)
         {
@@ -289,7 +380,7 @@ public class Parser {
             i++;
             if(i >= words.length || (!words[i].toLowerCase().equals("desc") && !words[i].toLowerCase().equals("asc")))
             {
-                orderKeys.add("asc"); 
+                orderKeys.add("asc");
             }        
             else
             {
@@ -299,7 +390,7 @@ public class Parser {
         }
     }
 
-    public void parseFrom(String[] words, int i)
+    private void parseFrom(String[] words, int i)
     {
         fromTable = words[i];
     }
@@ -337,5 +428,25 @@ public class Parser {
     public List<String> getOrderByStatement()
     {
         return orderKeys;
+    }
+
+    public List<String> getInsertFields()
+    {
+        return insertFields;
+    }
+
+    public List<String> getInsertValues()
+    {
+        return insertValues;
+    }
+
+    public String getUpdateField()
+    {
+        return updateField;
+    }
+
+    public String getUpdateValue()
+    {
+        return updateValue;
     }
 }

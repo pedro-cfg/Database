@@ -4,31 +4,60 @@ import com.database.Parser.operationNumber;
 
 public class SQLManager {
     
+    private FileManager fileM;
     private Parser parser;
 
-    SQLManager()
+    SQLManager(FileManager fm)
     {
+        fileM = fm;
         parser = new Parser();
     }
 
     public void processStatement(String statement)
     {
+        boolean success = false;
         parser.parse(statement);
         if(parser.getIsValid())
         {
             if(parser.getOperation() == operationNumber.SELECT)
-                select();
+                success = select();
+            else if(parser.getOperation() == operationNumber.INSERT)
+                success = insert();
+            else if(parser.getOperation() == operationNumber.DELETE)
+                success = delete();
+            else if(parser.getOperation() == operationNumber.UPDATE)
+                success = update();
         }
-        else
-            System.out.println("Error in SQL statement");
+        if(!success)
+            error();
+    }
+
+    public void error()
+    {
+        System.out.println("Error in SQL statement");
     }
     
-    public void select()
+    public boolean select()
     {
-        boolean success = false;
-        SelectOperation operation = new SelectOperation(parser.getColumns(), parser.getFromTable(), parser.getForeignTables(), parser.getForeignKeys(), parser.getWhereStatement(), parser.getOrderByStatement());
-        success = operation.execute();
-        if(!success)
-            System.out.println("Error in SQL statement");
+        SelectOperation operation = new SelectOperation(fileM, parser.getColumns(), parser.getFromTable(), parser.getForeignTables(), parser.getForeignKeys(), parser.getWhereStatement(), parser.getOrderByStatement());
+        return operation.execute();
+    }
+
+    public boolean insert()
+    {
+        InsertOperation operation = new InsertOperation(fileM, parser.getInsertFields(), parser.getInsertValues(), parser.getFromTable());
+        return operation.execute();
+    }
+
+    public boolean delete()
+    {
+        DeleteOperation operation = new DeleteOperation(fileM, parser.getFromTable(), parser.getWhereStatement());
+        return operation.execute();
+    }
+
+    public boolean update()
+    {
+        UpdateOperation operation = new UpdateOperation(fileM, parser.getFromTable(), parser.getUpdateField(), parser.getUpdateValue(), parser.getWhereStatement());
+        return operation.execute();
     }
 }

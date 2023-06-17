@@ -1,43 +1,27 @@
 package com.database;
 
-import java.io.BufferedReader;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 
-public class SelectOperation {
-
-    protected class Field
-    {
-        protected String table;
-        protected String value;
-    }
+public class SelectOperation extends SQLOperation
+{
 
     private List<String> columns;
-    private String fromTable;
     private List<String> joinTables;
     private List<String> joinKeys;
-    private List<String> whereKeys;
     private List<String> orderKeys;
-    private List<List<String>> results;
     private List<Integer> columnNumbers;
-    private List<Field> header;
 
-    SelectOperation(List<String> columnsList, String table, List<String> jTables, List<String> jKeys, List<String> wKeys, List<String> oKeys)
+    SelectOperation(FileManager fm, List<String> columnsList, String table, List<String> jTables, List<String> jKeys, List<String> wKeys, List<String> oKeys)
     {
+        super(fm);
         columns = columnsList;
         fromTable = table;
         joinTables = jTables;
         joinKeys = jKeys;
         whereKeys = wKeys;
         orderKeys = oKeys;
-        results = new ArrayList<>();
         columnNumbers = new ArrayList<>();
-        header = new ArrayList<>();
     }
 
     public boolean execute()
@@ -63,7 +47,7 @@ public class SelectOperation {
         return true;
     }
 
-    public void printResults()
+    private void printResults()
     {
         for(int i = 0; i < results.size(); i++)
         {
@@ -75,257 +59,31 @@ public class SelectOperation {
         }
     }
 
-    public boolean buildResults()
+    private boolean buildResults()
     {
-        String path = "data/" + fromTable + ".csv";
-        Path pathToFile = Paths.get(path);
-        try(BufferedReader br = Files.newBufferedReader(pathToFile, StandardCharsets.UTF_8))
-        {
-            String line = br.readLine();
-            String[] fields = line.split(",");
-            line = br.readLine();
-            while (line != null) {
-                fields = line.split(",");
-                List<String> list = new ArrayList<>();
-                for(int i = 0; i < fields.length; i++)
-                {
-                    list.add(fields[i]);
-                }
-                results.add(list);
-                line = br.readLine();
-            }
-            for(int i = 0; i < joinTables.size(); i++)
-            {
-                if(joinKeys.size()>joinTables.size())
-                {
-                    join(joinTables.get(i),joinKeys.get(i*2).split("\\.")[1]);
-                }
-                else
-                {
-                    join(joinTables.get(i),joinKeys.get(i));
-                }
-            }
-            return true;
-        }
-        catch (IOException e)
-        {
+        if(!fileM.getResults(results, fromTable))
             return false;
-        }
-    }
-
-    public boolean whereClause()
-    {
-        int i = 0;
-        while(i < whereKeys.size())
+        for(int i = 0; i < joinTables.size(); i++)
         {
-            Field field = new Field();
-            String operator = "";
-            String value = "";
-            List<List<String>> partialResults = new ArrayList<>();
-            if(whereKeys.get(i).toLowerCase().equals("and"))
-                i++;
-            if(i < whereKeys.size() && whereKeys.get(i).contains("."))
+            if(joinKeys.size()>joinTables.size())
             {
-                field.table = whereKeys.get(i).split("\\.")[0];
-                field.value = whereKeys.get(i).split("\\.")[1];
+                join(joinTables.get(i),joinKeys.get(i*2).split("\\.")[1]);
             }
             else
             {
-                boolean found = false;
-                for(int j = 0; j< header.size(); j++)
-                {
-                    if(whereKeys.get(i).equals(header.get(j).value))
-                    {
-                        field = header.get(j);
-                        found = true;
-                    }
-                }
-                if(!found)
-                return false;
-            }
-            i++;
-            if(i < whereKeys.size())
-                operator = whereKeys.get(i);
-            else
-                return false;
-            i++;
-            if(i < whereKeys.size())
-                value = whereKeys.get(i);
-            else
-                return false;
-            if(!whereExecute(partialResults, field, operator, value))
-                return false;
-            i++;
-            if(i < whereKeys.size() && whereKeys.get(i).toLowerCase().equals("or"))
-            {
-                List<List<String>> partialResults2 = new ArrayList<>();
-                i++;
-                if(whereKeys.get(i).contains("."))
-                {
-                    field.table = whereKeys.get(i).split("\\.")[0];
-                    field.value = whereKeys.get(i).split("\\.")[1];
-                }
-                else
-                {
-                    boolean found = false;
-                    for(int j = 0; j< header.size(); j++)
-                    {
-                        if(whereKeys.get(i).equals(header.get(j).value))
-                        {
-                            field = header.get(j);
-                            found = true;
-                        }
-                    }
-                    if(!found)
-                    return false;
-                }
-                i++;
-                if(i < whereKeys.size())
-                    operator = whereKeys.get(i);
-                else
-                    return false;
-                i++;
-                if(i < whereKeys.size())
-                    value = whereKeys.get(i);
-                else
-                    return false;
-                if(!whereExecute(partialResults2, field, operator, value))
-                    return false;
-                orExecute(partialResults, partialResults2);
-                i++;
-            }
-            results = partialResults;
-        }
-        return true;
-    }
-
-    public boolean whereExecute(List<List<String>> partialResults, Field field, String operator, String value)
-    {
-        int columnNumber = -1;
-        for(int i = 0; i< header.size(); i++)
-        {
-            if(field.table.equals(header.get(i).table) && field.value.equals(header.get(i).value))
-                columnNumber = i;
-        }
-        if(columnNumber == -1)
-            return false;
-        Integer integerValue = 0;
-        boolean isInteger = checkInteger(value);
-        if(isInteger)
-            integerValue = Integer.parseInt(value);
-        List<String> line;
-        for(int j = 0; j < results.size(); j++)
-        {
-            line = results.get(j);
-            if(isInteger)
-            {
-                if(compareInt(Integer.parseInt(line.get(columnNumber)), integerValue, operator))
-                    partialResults.add(line);
-            }
-            else
-            {
-                if(compareString(line.get(columnNumber).replace("\"", ""), value, operator))
-                    partialResults.add(line);
+                join(joinTables.get(i),joinKeys.get(i));
             }
         }
         return true;
     }
 
-    public void orExecute(List<List<String>> partialResults1, List<List<String>> partialResults2)
-    {
-        for(int i = 0; i < partialResults2.size(); i++)
-        {
-            List<String> line2 = partialResults2.get(i);
-            boolean alreadyIn = false;
-            for(int j = 0; j< partialResults1.size(); j++)
-            {
-                List<String> line1 = partialResults1.get(j);
-                boolean equalLine = true;
-                for(int k = 0; k < line1.size(); k++)
-                {
-                    if(!line1.get(k).equals(line2.get(k)))
-                        equalLine = false;
-                }
-                if(equalLine == true)
-                    alreadyIn = true;
-            }
-            if(!alreadyIn)
-                partialResults1.add(line2);
-        }
-    }
-
-    public boolean compareString(String value1, String value2, String operator)
-    {
-        switch (operator) {
-            case ">":
-                if (value1.compareTo(value2) > 0)
-                    return true;
-                break;
-            case "<":
-                if (value1.compareTo(value2) < 0)
-                    return true;
-                break;
-            case ">=":
-                if (value1.compareTo(value2) >= 0)
-                    return true;
-                break;
-            case "<=":
-                if (value1.compareTo(value2) <= 0)
-                    return true;
-                break;
-            case "=":
-                if (value1.equals(value2))
-                    return true;
-                break;
-        }
-        return false;
-    }
-
-    public boolean compareInt(int value1, int value2, String operator)
-    {
-        switch(operator)
-        {
-            case ">":
-                if(value1>value2)
-                    return true;
-                break;
-            case "<":
-                if(value1<value2)
-                    return true;
-                break;
-            case ">=":
-                if(value1>=value2)
-                    return true;
-                break;
-            case "<=":
-                if(value1<=value2)
-                    return true;
-                break;
-            case "=":
-                if(value1==value2)
-                    return true;
-                break;  
-        }
-        return false;
-    }
-
-    public boolean checkInteger(String value)
-    {
-        try {
-            Integer.parseInt(value);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
-    }
-
-    public boolean orderByClause()
+    private boolean orderByClause()
     {
         int i = orderKeys.size()-1;
         while(i >= 0)
         {
             String order = "desc";
-            Field field = new Field();
+            FileManager.Field field = fileM.new Field();;
             int position = 0;
             if(i >= 0)
             {
@@ -370,7 +128,7 @@ public class SelectOperation {
         return true;
     }
 
-    public void bubbleSort(int position, String order)
+    private void bubbleSort(int position, String order)
     {
         int n = results.size();
         boolean swapped;
@@ -441,17 +199,19 @@ public class SelectOperation {
         }
     }
 
-    public void swap(int j)
+    private void swap(int j)
     {
         List<String> temp = results.get(j);
         results.set(j, results.get(j+1));
         results.set(j+1, temp);
     }
 
-    public boolean buildHeader()
+    private boolean buildHeader()
     {
-        List<Field> mainHeader = getHeader(fromTable);
-        if(mainHeader == null)
+        List<FileManager.Field> mainHeader = new ArrayList<>();
+        if(!fileM.getHeader(mainHeader,fromTable))
+            return false;
+        if(mainHeader.size() == 0)
             return false;
 
         if(joinTables.size() == 0)
@@ -465,7 +225,9 @@ public class SelectOperation {
         {
             for(int i = 0; i < joinTables.size(); i++)
             {
-                List<Field> joinHeader = getHeader(joinTables.get(i));
+                List<FileManager.Field> joinHeader = new ArrayList<>();
+                if(!fileM.getHeader(joinHeader,joinTables.get(i)))
+                    return false;
                 if(!checkForeignKey(mainHeader, joinKeys.get(i*2)) && !checkForeignKey(mainHeader, joinKeys.get(i*2+1)))
                     return false;
                 if(!checkForeignKey(joinHeader, joinKeys.get(i*2)) && !checkForeignKey(joinHeader, joinKeys.get(i*2+1)))
@@ -481,7 +243,9 @@ public class SelectOperation {
         {
             for(int i = 0; i < joinTables.size(); i++)
             {
-                List<Field> joinHeader = getHeader(joinTables.get(i));
+                List<FileManager.Field> joinHeader = new ArrayList<>();
+                if(!fileM.getHeader(joinHeader,joinTables.get(i)))
+                    return false;
                 if(!checkForeignKey(mainHeader, joinKeys.get(i)))
                     return false;
                 if(!checkForeignKey(joinHeader, joinKeys.get(i)))
@@ -497,7 +261,7 @@ public class SelectOperation {
             return false;
     }
 
-    public boolean buildSelect()
+    private boolean buildSelect()
     {
         if(columns.get(0).equals("*"))
         {
@@ -510,7 +274,7 @@ public class SelectOperation {
         boolean correspondent;
         for(int i = 0; i< columns.size(); i++)
         {
-            Field field = new Field();
+            FileManager.Field field = fileM.new Field();;
             if(columns.get(i).contains("."))
             {
                 field.table = columns.get(i).split("\\.")[0];
@@ -538,35 +302,11 @@ public class SelectOperation {
         return true;
     }
 
-    public List<Field> getHeader(String table)
-    {
-        List<Field> head = new ArrayList<>();
-        String path = "data/" + table + ".csv";
-        Path pathToFile = Paths.get(path);
-        try(BufferedReader br = Files.newBufferedReader(pathToFile, StandardCharsets.UTF_8))
-        {
-            String line = br.readLine();
-            String[] fields = line.split(",");        
-            for(int i = 0; i < fields.length; i++)
-            {
-                Field field = new Field();
-                field.table = table;
-                field.value = fields[i];
-                head.add(field);
-            }
-            return head;
-        }
-        catch (IOException e)
-        {
-            return null;
-        }
-    }
-
-    public boolean checkForeignKey(List<Field> columns,String key)
+    private boolean checkForeignKey(List<FileManager.Field> columns,String key)
     {
         if(columns == null)
             return false;
-        Field field = new Field();
+        FileManager.Field field = fileM.new Field();
         if(key.contains("."))
         {
             String[] vector = key.split("\\.");
@@ -586,7 +326,7 @@ public class SelectOperation {
         return false;
     }
 
-    public boolean join(String table, String key)
+    private boolean join(String table, String key)
     {
         int firstKey = -1;
         int secondKey = -1;
@@ -607,34 +347,19 @@ public class SelectOperation {
         secondKey = secondKey - initialSize;
         for(int i = 0; i < results.size(); i++)
         {      
-            String path = "data/" + table + ".csv";
-            Path pathToFile = Paths.get(path);
-            try(BufferedReader br = Files.newBufferedReader(pathToFile, StandardCharsets.UTF_8))
-            {
-                String line = br.readLine();
-                String[] fields = line.split(",");  
-                line = br.readLine();
-                while(line != null)
-                {
-                    fields = line.split(",");
-                    List<String> list = new ArrayList<>();
-                    for(int j = 0; j < fields.length; j++)
-                    {
-                        list.add(fields[j]);
-                    }
-                    if(fields[secondKey].equals(results.get(i).get(firstKey)))
-                        results.get(i).addAll(list);
-                    line = br.readLine();
-                }
-                if(results.get(i).size() <= initialSize)
-                {
-                    results.remove(i);
-                    i--;
-                }
-            }
-            catch (IOException e)
-            {
+            List<List<String>> joinResults = new ArrayList<>();
+            if(!fileM.getResults(joinResults, table))
                 return false;
+            for(int j = 0; j < joinResults.size(); j++)
+            {
+                List<String> line = joinResults.get(j);
+                if(line.get(secondKey).equals(results.get(i).get(firstKey)))
+                    results.get(i).addAll(line);
+            }
+            if(results.get(i).size() <= initialSize)
+            {
+                results.remove(i);
+                i--;
             }
         } 
         return true;       
