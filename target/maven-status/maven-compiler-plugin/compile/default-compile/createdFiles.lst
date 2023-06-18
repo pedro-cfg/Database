@@ -1,6 +1,0 @@
-com/database/SQLManager.class
-com/database/Parser.class
-com/database/SelectOperation.class
-com/database/SelectOperation$Field.class
-com/database/Main.class
-com/database/Parser$operationNumber.class

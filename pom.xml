@@ -8,14 +8,14 @@
   <artifactId>system</artifactId>
   <version>1.0.0</version>
 
-  <name>system</name>
+  <name>database</name>
   <!-- FIXME change it to the project's website -->
   <url>http://www.example.com</url>
 
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-    <maven.compiler.source>20</maven.compiler.source>
-    <maven.compiler.target>20</maven.compiler.target>
+    <maven.compiler.source>1.8</maven.compiler.source>
+    <maven.compiler.target>1.8</maven.compiler.target>
   </properties>
 
   <dependencies>
@@ -53,7 +53,7 @@
           <configuration>
             <archive>
               <manifest>
-                <mainClass>com.database.Main</mainClass>
+                <mainClass>com.database.MainFrame</mainClass>
               </manifest>
             </archive>
           </configuration>
@@ -79,4 +79,11 @@
       </plugins>
     </pluginManagement>
   </build>
+    <repositories>
+        <repository>
+            <id>unknown-jars-temp-repo</id>
+            <name>A temporary repository created by NetBeans for libraries and jars it could not identify. Please replace the dependencies in this repository with correct ones and delete this repository.</name>
+            <url>file:${project.basedir}/lib</url>
+        </repository>
+    </repositories>
 </project>

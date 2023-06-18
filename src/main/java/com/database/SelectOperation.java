@@ -2,6 +2,9 @@ package com.database;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Vector;
+import javax.swing.table.DefaultTableModel;
+import javax.swing.table.TableColumn;
 
 public class SelectOperation extends SQLOperation
 {
@@ -11,8 +14,9 @@ public class SelectOperation extends SQLOperation
     private List<String> joinKeys;
     private List<String> orderKeys;
     private List<Integer> columnNumbers;
+    private javax.swing.JTable jTable;
 
-    SelectOperation(FileManager fm, List<String> columnsList, String table, List<String> jTables, List<String> jKeys, List<String> wKeys, List<String> oKeys)
+    SelectOperation(javax.swing.JTable jTable1, FileManager fm, List<String> columnsList, String table, List<String> jTables, List<String> jKeys, List<String> wKeys, List<String> oKeys)
     {
         super(fm);
         columns = columnsList;
@@ -22,6 +26,7 @@ public class SelectOperation extends SQLOperation
         whereKeys = wKeys;
         orderKeys = oKeys;
         columnNumbers = new ArrayList<>();
+        jTable = jTable1;
     }
 
     public boolean execute()
@@ -39,24 +44,9 @@ public class SelectOperation extends SQLOperation
         {
             if(!orderByClause())
                 return false;
-        }
-        for(int i = 0; i < columns.size(); i++)
-            System.out.print(header.get(columnNumbers.get(i)).value + " ");
-        System.out.print("\n");
-        printResults();
+        }  
+        buildTable();
         return true;
-    }
-
-    private void printResults()
-    {
-        for(int i = 0; i < results.size(); i++)
-        {
-            for(int j = 0; j < columns.size(); j++)
-            {
-                System.out.print(results.get(i).get(columnNumbers.get(j)) + " ");
-            }
-            System.out.print("\n");
-        }
     }
 
     private boolean buildResults()
@@ -363,5 +353,26 @@ public class SelectOperation extends SQLOperation
             }
         } 
         return true;       
+    }
+    
+    private void buildTable()
+    {
+        DefaultTableModel model = new DefaultTableModel();
+        jTable.setModel(model);
+
+        for (int i = 0; i < columns.size(); i++) {
+            model.addColumn(header.get(columnNumbers.get(i)).value);
+        }
+
+        for(int i = 0; i < results.size(); i++)
+        {
+            List<String> line = new ArrayList<>();
+            for(int j = 0; j < columns.size(); j++)
+            {
+                line.add(results.get(i).get(columnNumbers.get(j)));
+            }
+             model.addRow(line.toArray());
+        }
+       
     }
 }

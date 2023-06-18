@@ -1,4 +1,9 @@
-/home/pedro/Documentos/DataBase/Database/src/main/java/com/database/Parser.java
-/home/pedro/Documentos/DataBase/Database/src/main/java/com/database/SelectOperation.java
-/home/pedro/Documentos/DataBase/Database/src/main/java/com/database/Main.java
-/home/pedro/Documentos/DataBase/Database/src/main/java/com/database/SQLManager.java
+/home/pedro/NetBeansProjects/Database/src/main/java/com/database/MainFrame.java
+/home/pedro/NetBeansProjects/Database/src/main/java/com/database/DeleteOperation.java
+/home/pedro/NetBeansProjects/Database/src/main/java/com/database/SelectOperation.java
+/home/pedro/NetBeansProjects/Database/src/main/java/com/database/UpdateOperation.java
+/home/pedro/NetBeansProjects/Database/src/main/java/com/database/InsertOperation.java
+/home/pedro/NetBeansProjects/Database/src/main/java/com/database/SQLManager.java
+/home/pedro/NetBeansProjects/Database/src/main/java/com/database/Parser.java
+/home/pedro/NetBeansProjects/Database/src/main/java/com/database/FileManager.java
+/home/pedro/NetBeansProjects/Database/src/main/java/com/database/SQLOperation.java
