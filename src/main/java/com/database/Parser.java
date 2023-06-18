@@ -62,6 +62,7 @@ public class Parser {
         sentence = sentence.replaceAll(","," ");
         sentence = sentence.replaceAll("\\("," ");
         sentence = sentence.replaceAll("\\)"," ");
+        sentence = sentence.replaceAll(";"," ");
 
         String[] words = sentence.split("\\s+");
 
