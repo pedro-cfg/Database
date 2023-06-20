@@ -1,7 +1,9 @@
 package com.database;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.Vector;
 import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableColumn;
@@ -335,23 +337,42 @@ public class SelectOperation extends SQLOperation
             return false;
 
         secondKey = secondKey - initialSize;
+        List<List<String>> joinResults = new ArrayList<>();
+        if(!fileM.getResults(joinResults, table))
+            return false;
+        List<List<String>> element;
+        List<List<String>> finalResults = new ArrayList<>();
+        Map<String,List<List<String>>> map = new HashMap<String,List<List<String>>>();
+        for(int i = 0; i < joinResults.size(); i++)
+        {
+            if(map.containsKey(joinResults.get(i).get(secondKey)))
+            {
+                element = map.get(joinResults.get(i).get(secondKey));
+                element.add(joinResults.get(i));
+            }
+            else
+            {
+                element = new ArrayList<>();
+                element.add(joinResults.get(i));
+                map.put(joinResults.get(i).get(secondKey),element);
+            }
+        }
         for(int i = 0; i < results.size(); i++)
         {      
-            List<List<String>> joinResults = new ArrayList<>();
-            if(!fileM.getResults(joinResults, table))
-                return false;
-            for(int j = 0; j < joinResults.size(); j++)
+            if(map.containsKey(results.get(i).get(firstKey)))
             {
-                List<String> line = joinResults.get(j);
-                if(line.get(secondKey).equals(results.get(i).get(firstKey)))
-                    results.get(i).addAll(line);
-            }
-            if(results.get(i).size() <= initialSize)
-            {
-                results.remove(i);
-                i--;
+                element = map.get(results.get(i).get(firstKey));
+                for(int j = 0; j < element.size(); j++)
+                {
+                    List<String> line = new ArrayList<>();
+                    line.addAll(results.get(i));
+                    line.addAll(element.get(j));
+                    finalResults.add(line);
+                }
             }
         } 
+        results.clear();
+        results.addAll(finalResults);
         return true;       
     }
     
