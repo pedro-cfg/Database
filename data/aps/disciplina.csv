@@ -1,0 +1,6 @@
+nome,codigo,bloco,sala,cargaHoraria,ementa,bibliografia
+Programação I,10001,B,201,120,Introdução à programação,Livro de programação em C
+Matemática Discreta,10002,C,305,150,Fundamentos matemáticos para computação,Livro de Matemática Discreta
+Redes de Computadores,10003,A,415,180,Fundamentos de redes de computadores,Livro de Redes de Computadores
+Engenharia de Software,10004,D,101,200,Princípios de engenharia de software,Livro de Engenharia de Software
+Sistemas Operacionais,10005,E,510,160,Fundamentos de sistemas operacionais,Livro de Sistemas Operacionais

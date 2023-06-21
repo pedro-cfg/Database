@@ -133,7 +133,12 @@ public class SQLOperation
             }
             else
             {
-                if(compareString(line.get(columnNumber).replace("\"", ""), value, operator))
+                String str;
+                if(line.get(columnNumber).contains("\""))
+                    str = line.get(columnNumber).replace("\"", "");
+                else 
+                    str = line.get(columnNumber);
+                if(compareString(str, value, operator))
                     partialResults.add(line);
             }
         }
@@ -183,7 +188,7 @@ public class SQLOperation
                     return true;
                 break;
             case "=":
-                if (value1.equals(value2))
+                if (value1.compareTo(value2) == 0)
                     return true;
                 break;
         }

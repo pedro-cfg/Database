@@ -1,1 +1,14 @@
+com/database/InsertOperation.class
+com/database/DeleteOperation.class
+com/database/MainFrame$2.class
+com/database/Parser$operationNumber.class
+com/database/UpdateOperation.class
+com/database/MainFrame$3.class
 com/database/SQLManager.class
+com/database/Parser.class
+com/database/SelectOperation.class
+com/database/FileManager$Field.class
+com/database/SQLOperation.class
+com/database/MainFrame.class
+com/database/MainFrame$1.class
+com/database/FileManager.class

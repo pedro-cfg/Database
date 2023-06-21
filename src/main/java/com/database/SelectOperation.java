@@ -344,7 +344,8 @@ public class SelectOperation extends SQLOperation
         }
         for(int i = 0; i < columns.size(); i++)
         {
-            if(columns.get(i).table.equals(field.table) && columns.get(i).value.equals(field.value))
+            //if(columns.get(i).table.equals(field.table) && columns.get(i).value.equals(field.value))
+            if(columns.get(i).value.equals(field.value))
                 return true;
         }
         return false;
