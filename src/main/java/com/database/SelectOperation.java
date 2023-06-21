@@ -114,88 +114,120 @@ public class SelectOperation extends SQLOperation
             }
             if(!found)
                 return false;
-            bubbleSort(position, order);
+            boolean isInteger = checkInteger(results.get(0).get(position));
+            if(isInteger)
+                mergeSortInt(order,position,0,results.size()-1);
+            else
+                mergeSortString(order,position,0,results.size()-1);
             i--;
         }
         return true;
     }
 
-    private void bubbleSort(int position, String order)
+    private void mergeSortInt(String order, int position, int beg, int end)
     {
-        int n = results.size();
-        boolean swapped;
-
-        if(results.size() > 0)
+        if(beg < end)
         {
-            boolean isInteger = checkInteger(results.get(0).get(position));
-            if(isInteger)
+            int mid = (beg+end)/2;
+            mergeSortInt(order,position,beg,mid);
+            mergeSortInt(order,position,mid+1,end);
+            mergeINT(order,position,beg,end);
+        }
+    }
+    
+    private void mergeSortString(String order, int position, int beg, int end)
+    {
+        if(beg < end)
+        {
+            int mid = (beg+end)/2;
+            mergeSortString(order,position,beg,mid);
+             mergeSortString(order,position,mid+1,end);
+            mergeString(order,position,beg,end);
+        }
+    }
+    
+    private void mergeINT(String order, int position, int beg, int end)
+    {
+        int mid = (beg+end)/2 + 1;
+        List<List<String>> left = new ArrayList<>();
+        List<List<String>> right = new ArrayList<>();
+        int i,j;
+        for(i = beg; i < mid; i++)
+            left.add(results.get(i));
+        for(i = mid; i < end+1; i++)
+            right.add(results.get(i));
+        j = i = 0;
+        for(int k = beg; k < end + 1; k++)
+        {
+            if(order.toLowerCase().equals("asc"))
             {
-                for (int i = 0; i < n - 1; i++) 
+                if(j>=right.size() || (i < left.size() && Integer.parseInt(left.get(i).get(position)) <= Integer.parseInt(right.get(j).get(position))))
                 {
-                    swapped = false;
-                    for (int j = 0; j < n - i - 1; j++) 
-                    {
-                        int firstValue = Integer.parseInt(results.get(j).get(position));
-                        int secondValue = Integer.parseInt(results.get(j+1).get(position));
-                        if(order.toLowerCase().equals("asc"))
-                        {
-                            if(firstValue > secondValue)
-                            {
-                                swap(j);
-                                swapped = true;
-                            }
-                        }
-                        else
-                        {
-                            if(firstValue < secondValue)
-                            {
-                                swap(j);
-                                swapped = true;
-                            }
-                        }
-                    }
-                    if (!swapped) 
-                        break;
+                    results.set(k, left.get(i));
+                    i++;
+                }
+                else
+                {
+                    results.set(k, right.get(j));
+                    j++;
                 }
             }
             else
             {
-                for (int i = 0; i < n - 1; i++) 
+                if(j>=right.size() || (i < left.size() && Integer.parseInt(left.get(i).get(position)) >= Integer.parseInt(right.get(j).get(position))))
                 {
-                    swapped = false;
-                    for (int j = 0; j < n - i - 1; j++) 
-                    {
-                        String firstValue = results.get(j).get(position);
-                        String secondValue = results.get(j+1).get(position);
-                        if(order.toLowerCase().equals("asc"))
-                        {
-                            if(firstValue.compareTo(secondValue) > 0)
-                            {
-                                swap(j);;
-                                swapped = true;
-                            }
-                        }
-                        else
-                        {
-                            if(firstValue.compareTo(secondValue) < 0)
-                            {
-                                swap(j);
-                                swapped = true;
-                            }
-                        }
-                    }
-                    if (!swapped) 
-                        break;
+                    results.set(k, left.get(i));
+                    i++;
+                }
+                else
+                {
+                    results.set(k, right.get(j));
+                    j++;
                 }
             }
         }
     }
-
-    private void swap(int j)
+    
+    private void mergeString(String order, int position, int beg, int end)
     {
-        List<String> temp = results.get(j);
-        results.set(j, results.get(j+1));
-        results.set(j+1, temp);
+        int mid = (beg+end)/2 + 1;
+        List<List<String>> left = new ArrayList<>();
+        List<List<String>> right = new ArrayList<>();
+        int i,j;
+        for(i = beg; i < mid; i++)
+            left.add(results.get(i));
+        for(i = mid; i < end+1; i++)
+            right.add(results.get(i));
+        j = i = 0;
+        for(int k = beg; k < end + 1; k++)
+        {
+            if(order.toLowerCase().equals("asc"))
+            {
+                if(j>=right.size() || (i < left.size() && left.get(i).get(position).compareTo(right.get(j).get(position)) <= 0))
+                {
+                    results.set(k, left.get(i));
+                    i++;
+                }
+                else
+                {
+                    results.set(k, right.get(j));
+                    j++;
+                }
+            }
+            else
+            {
+                if(j>=right.size() || (i < left.size() && left.get(i).get(position).compareTo(right.get(j).get(position)) >= 0))
+                {
+                    results.set(k, left.get(i));
+                    i++;
+                }
+                else
+                {
+                    results.set(k, right.get(j));
+                    j++;
+                }
+            }
+        }
     }
 
     private boolean buildHeader()

@@ -119,13 +119,14 @@ public class SQLOperation
             return false;
         Integer integerValue = 0;
         boolean isInteger = checkInteger(value);
-        if(isInteger)
+        boolean isResultInteger = checkInteger(results.get(0).get(columnNumber));
+        if(isInteger && isResultInteger)
             integerValue = Integer.parseInt(value);
         List<String> line;
         for(int j = 0; j < results.size(); j++)
         {
             line = results.get(j);
-            if(isInteger)
+            if(isInteger && isResultInteger)
             {
                 if(compareInt(Integer.parseInt(line.get(columnNumber)), integerValue, operator))
                     partialResults.add(line);
