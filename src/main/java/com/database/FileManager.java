@@ -28,6 +28,8 @@ public class FileManager
     private JList<String> jList1;
     private String schema;
     private String table;
+    private String user;
+    private String password;
     
     public class Field
     {
@@ -237,8 +239,6 @@ public class FileManager
         String path = "data/" + schema + "/";
         
         String url = "jdbc:mysql://localhost:3306/" + sc;
-        String user = "pedro";
-        String password = "1234";
         String query = "SELECT * FROM " + tb;
 
         try (Connection connection = DriverManager.getConnection(url, user, password);
@@ -269,7 +269,29 @@ public class FileManager
             getTables();
 
         } catch (SQLException | IOException e) {
-            e.printStackTrace();
+            System.out.println(e);
+        }
+    }
+    
+    public boolean setConnection(String u, String p)
+    {
+        user = u;
+        password = p;
+        return testConnection();
+    }
+    
+    private boolean testConnection()
+    {
+        String url = "jdbc:mysql://localhost:3306/";
+        try (Connection connection = DriverManager.getConnection(url, user, password))
+        {
+            connection.close();
+            return true;
+        }
+        catch(SQLException e)
+        {
+            System.out.println(e);
+            return false;
         }
     }
 }
