@@ -121,7 +121,9 @@ public class SQLOperation
             return false;
         Integer integerValue = 0;
         boolean isInteger = checkInteger(value);
-        boolean isResultInteger = checkInteger(results.get(0).get(columnNumber));
+        boolean isResultInteger = false;
+        if(!results.isEmpty())
+            isResultInteger = checkInteger(results.get(0).get(columnNumber));
         if(isInteger && isResultInteger)
             integerValue = Integer.parseInt(value);
         List<String> line;
