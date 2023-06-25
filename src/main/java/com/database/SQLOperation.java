@@ -1,7 +1,9 @@
 package com.database;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SQLOperation 
 {
@@ -147,25 +149,24 @@ public class SQLOperation
 
     protected void orExecute(List<List<String>> partialResults1, List<List<String>> partialResults2)
     {
-        for(int i = 0; i < partialResults2.size(); i++)
+        Map<List<String>,List<String>> map = new HashMap<List<String>,List<String>>();
+        for (List<String> res : partialResults1) 
         {
-            List<String> line2 = partialResults2.get(i);
-            boolean alreadyIn = false;
-            for(int j = 0; j< partialResults1.size(); j++)
-            {
-                List<String> line1 = partialResults1.get(j);
-                boolean equalLine = true;
-                for(int k = 0; k < line1.size(); k++)
-                {
-                    if(!line1.get(k).equals(line2.get(k)))
-                        equalLine = false;
-                }
-                if(equalLine == true)
-                    alreadyIn = true;
-            }
-            if(!alreadyIn)
-                partialResults1.add(line2);
+            map.put(res, res);
         }
+        
+        List<String> line1 = new ArrayList<>();
+        List<String> line2 = new ArrayList<>();
+        for(int j = 0; j< partialResults2.size(); j++)
+        {
+            line2 = partialResults2.get(j);
+            line1 = map.get(line2);
+           
+            if(line1 == null)
+                partialResults1.add(line2);
+
+        }
+
     }
 
     protected boolean compareString(String value1, String value2, String operator)

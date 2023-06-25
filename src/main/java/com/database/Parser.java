@@ -330,35 +330,34 @@ public class Parser {
                 i++;
             }
             String phrase = words[i];
-            String regex = "(\\w+[.]\\w+)\\s*([<>=]+)\\s*(\\w+.*?)";
+            String regex = "(\\w+[.]\\w+)([<>=]+)(\\w+.*?)";
             if(!phrase.contains("."))
             {
-                regex = "(\\w+)\\s*([<>=]+)\\s*(\\w+.*?)";
+                regex = "(\\w+)([<>=]+)(\\w+.*?)";
             }
             Pattern pattern = Pattern.compile(regex);
-            Matcher matcher = pattern.matcher(phrase);
-            int k=0;
-            while(i < words.length && !matcher.matches() && k < 2)
+            Matcher matcher = pattern.matcher(phrase);  
+            boolean com = false;
+            String value = "";
+            while(i < words.length && !matcher.matches())
             {
-                k++;
+                if(phrase.contains("\""))
+                    com = true;
                 i++;
                 if(i < words.length && words[i].contains("\""))
                 {
-                    String value = words[i];
-                    Pattern pattern2 = Pattern.compile("\"(.*?)\"");;
-                    Matcher matcher2 = pattern2.matcher(value);
-                    while(i < words.length && !matcher2.matches())
-                    {
-                        i++;
-                        if(i < words.length)
-                            value = value.concat(" " + words[i]);
-                        matcher2 = pattern2.matcher(value);
-                    }
-                    value = value.replace("\"","");
-                    phrase = phrase.concat(" " + value);
+                    regex = "(\\w+)([<>=]+)\"(.*?)\"";
+                    pattern = Pattern.compile(regex);
+                    value = com?(" " + words[i]):(words[i]);
+                    phrase = phrase.concat(value);
+                    com = true;
                 }
                 else
-                    phrase = phrase.concat(" " + words[i]);
+                    if(i<words.length)
+                    {
+                        value = com?(" " + words[i]):(words[i]);
+                        phrase = phrase.concat(value);
+                    }
                 matcher = pattern.matcher(phrase);
             }
             if (matcher.matches()) {
