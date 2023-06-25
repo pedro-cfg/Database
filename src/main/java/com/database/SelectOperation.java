@@ -287,6 +287,8 @@ public class SelectOperation extends SQLOperation
 
     private boolean buildSelect()
     {
+        if(columns.isEmpty())
+            return false;
         if(columns.get(0).equals("*"))
         {
             columns.clear();
